@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Account Information - {{ username }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card glow-card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-user-shield"></i> 
+                        Complete Account Information - {{ username }}
+                    </h3>
+                </div>
+                
+                <div class="card-body">
+                    <!-- User Avatar and Basic Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-3 text-center">
+                            {% if user_info.avatar_url %}
+                                <img src="{{ user_info.avatar_url }}" 
+                                     alt="{{ username }}'s Avatar" 
+                                     class="img-fluid rounded-circle glow-border mb-3"
+                                     style="max-width: 150px; max-height: 150px;">
+                            {% endif %}
+                            <h4 class="text-primary">{{ user_info.username }}</h4>
+                            <p class="text-muted">ID: {{ user_info.user_id }}</p>
+                        </div>
+                        
+                        <div class="col-md-9">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5 class="text-success"><i class="fas fa-info-circle"></i> Account Details</h5>
+                                    <p><strong>Display Name:</strong> {{ user_info.display_name or 'N/A' }}</p>
+                                    <p><strong>Verified Badge:</strong> 
+                                        {% if user_info.has_verified_badge %}
+                                            <span class="badge bg-success">✓ Verified</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Not Verified</span>
+                                        {% endif %}
+                                    </p>
+                                    <p><strong>Account Created:</strong> {{ user_info.created_date or 'Unknown' }}</p>
+                                    <p><strong>Banned Status:</strong> 
+                                        {% if user_info.is_banned %}
+                                            <span class="badge bg-danger">⚠️ Banned</span>
+                                        {% else %}
+                                            <span class="badge bg-success">✓ Active</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <h5 class="text-info"><i class="fas fa-chart-bar"></i> Social Stats</h5>
+                                    <p><strong>Friends:</strong> {{ user_info.friends_count or 'Unknown' }}</p>
+                                    <p><strong>Followers:</strong> {{ user_info.followers_count or 'Unknown' }}</p>
+                                    <p><strong>Following:</strong> {{ user_info.following_count or 'Unknown' }}</p>
+                                    <p><strong>Robux:</strong> {{ user_info.robux or 'Private' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Current Authenticator Code -->
+                    <div class="alert alert-success text-center mb-4">
+                        <h4><i class="fas fa-key"></i> Current Authenticator Code</h4>
+                        <h2 class="text-dark font-monospace">{{ current_code }}</h2>
+                        <small class="text-muted">Updates every 30 seconds automatically</small>
+                    </div>
+                    
+                    <!-- Profile Description -->
+                    {% if user_info.description and user_info.description != 'No description' %}
+                    <div class="mb-4">
+                        <h5 class="text-warning"><i class="fas fa-quote-left"></i> Profile Description</h5>
+                        <div class="alert alert-light">
+                            {{ user_info.description }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Recent Games -->
+                    {% if user_info.recent_games %}
+                    <div class="mb-4">
+                        <h5 class="text-primary"><i class="fas fa-gamepad"></i> Recent/Created Games</h5>
+                        <div class="row">
+                            {% for game in user_info.recent_games[:6] %}
+                            <div class="col-md-4 mb-2">
+                                <div class="card">
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title">{{ game.name }}</h6>
+                                        <small class="text-muted">ID: {{ game.id }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Groups -->
+                    {% if user_info.groups %}
+                    <div class="mb-4">
+                        <h5 class="text-secondary"><i class="fas fa-users"></i> Group Memberships</h5>
+                        <div class="row">
+                            {% for group in user_info.groups[:6] %}
+                            <div class="col-md-6 mb-2">
+                                <div class="card">
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title">{{ group.name }}</h6>
+                                        <small class="text-muted">Role: {{ group.role }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Cookie Information -->
+                    <div class="mb-4">
+                        <h5 class="text-danger"><i class="fas fa-cookie-bite"></i> Cookie Information</h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Original Cookie:</strong></label>
+                            <div class="input-group">
+                                <input type="text" class="form-control font-monospace" 
+                                       value="{{ original_cookie }}" 
+                                       id="originalCookie" readonly>
+                                <button class="btn btn-outline-secondary" type="button" 
+                                        onclick="copyToClipboard('originalCookie')">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                        
+                        {% if refreshed_cookie and refreshed_cookie != original_cookie %}
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Refreshed Cookie:</strong></label>
+                            <div class="input-group">
+                                <input type="text" class="form-control font-monospace" 
+                                       value="{{ refreshed_cookie }}" 
+                                       id="refreshedCookie" readonly>
+                                <button class="btn btn-outline-secondary" type="button" 
+                                        onclick="copyToClipboard('refreshedCookie')">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                            </div>
+                            <small class="text-success">✓ Cookie successfully refreshed!</small>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            Original cookie is still valid - no refresh needed.
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="text-center">
+                        <a href="{{ url_for('authenticator_with_code', username=username, code=unique_code) }}" 
+                           class="btn btn-primary btn-lg me-3">
+                            <i class="fas fa-key"></i> View Live Authenticator Codes
+                        </a>
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-plus"></i> Add Another Account
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    element.select();
+    element.setSelectionRange(0, 99999);
+    
+    try {
+        document.execCommand('copy');
+        
+        // Visual feedback
+        const button = element.nextElementSibling;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        button.classList.remove('btn-outline-secondary');
+        button.classList.add('btn-success');
+        
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('btn-success');
+            button.classList.add('btn-outline-secondary');
+        }, 2000);
+        
+    } catch (err) {
+        console.error('Failed to copy: ', err);
+    }
+}
+
+// Auto-refresh authenticator code every 30 seconds
+setInterval(() => {
+    location.reload();
+}, 30000);
+</script>
+{% endblock %}

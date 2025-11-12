@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}Authenticator - {{ username }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8">
+        <!-- User Info Card -->
+        <div class="gaming-card mb-4">
+            <div class="card-body text-center">
+                <div class="user-avatar mb-3">
+                    {% if avatar_url %}
+                        <img src="{{ avatar_url }}" alt="{{ username }}'s avatar" class="rounded-circle glow-avatar" width="120" height="120">
+                    {% else %}
+                        <i class="fas fa-user-circle fa-4x glow-text"></i>
+                    {% endif %}
+                </div>
+                <h4 class="glow-text mb-2">{{ username }}</h4>
+                <p class="text-muted">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    Authenticator Active
+                    {% if unique_code %}
+                        <br><small class="text-info">Unique Code: {{ unique_code }}</small>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        <!-- Authenticator Code Card -->
+        <div class="gaming-card">
+            <div class="card-header text-center">
+                <h3 class="mb-0">
+                    <i class="fas fa-lock me-2"></i>
+                    Authentication Code
+                </h3>
+            </div>
+            <div class="card-body text-center">
+                <!-- Current Code Display -->
+                <div class="code-display mb-4">
+                    <div class="code-value glow-text" id="currentCode">
+                        {{ current_code or "------" }}
+                    </div>
+                    <div class="code-label">Current Code</div>
+                </div>
+
+                <!-- Timer Display -->
+                <div class="timer-section mb-4">
+                    <div class="timer-ring">
+                        <svg class="timer-svg" viewBox="0 0 100 100">
+                            <circle class="timer-circle-bg" cx="50" cy="50" r="45"></circle>
+                            <circle class="timer-circle" cx="50" cy="50" r="45" id="timerCircle"></circle>
+                        </svg>
+                        <div class="timer-text">
+                            <span id="timeRemaining">{{ time_remaining or 30 }}</span>s
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manual Refresh Button -->
+                <button class="btn gaming-btn-secondary" onclick="refreshCode()" id="refreshBtn">
+                    <i class="fas fa-sync-alt me-2"></i>
+                    Refresh Code
+                </button>
+            </div>
+        </div>
+
+        <!-- Status Card -->
+        <div class="gaming-card mt-4">
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="status-item">
+                            <i class="fas fa-clock fa-2x text-primary mb-2"></i>
+                            <div>Auto-Refresh</div>
+                            <small class="text-muted">Every 30s</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="status-item">
+                            <i class="fas fa-shield-alt fa-2x text-success mb-2"></i>
+                            <div>Secure</div>
+                            <small class="text-muted">Encrypted</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="status-item">
+                            <i class="fas fa-mobile-alt fa-2x text-info mb-2"></i>
+                            <div>Responsive</div>
+                            <small class="text-muted">All Devices</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let refreshInterval;
+let countdownInterval;
+
+// Initialize the authenticator page
+document.addEventListener('DOMContentLoaded', function() {
+    startCountdown();
+    startAutoRefresh();
+});
+
+function startCountdown() {
+    const timerCircle = document.getElementById('timerCircle');
+    const timeDisplay = document.getElementById('timeRemaining');
+    const circumference = 2 * Math.PI * 45; // radius = 45
+    
+    timerCircle.style.strokeDasharray = circumference;
+    
+    countdownInterval = setInterval(function() {
+        fetch('/api/code')
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Error:', data.error);
+                    return;
+                }
+                
+                const timeRemaining = data.time_remaining;
+                timeDisplay.textContent = timeRemaining;
+                
+                // Update circle progress
+                const progress = timeRemaining / 30;
+                const strokeDashoffset = circumference * (1 - progress);
+                timerCircle.style.strokeDashoffset = strokeDashoffset;
+                
+                // Change color based on time remaining
+                if (timeRemaining <= 5) {
+                    timerCircle.style.stroke = '#ff4757'; // Red
+                } else if (timeRemaining <= 10) {
+                    timerCircle.style.stroke = '#ffa502'; // Orange
+                } else {
+                    timerCircle.style.stroke = '#00d2d3'; // Cyan
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching time:', error);
+            });
+    }, 1000);
+}
+
+function startAutoRefresh() {
+    refreshInterval = setInterval(function() {
+        refreshCode();
+    }, 30000); // Refresh every 30 seconds
+}
+
+function refreshCode() {
+    const refreshBtn = document.getElementById('refreshBtn');
+    const codeDisplay = document.getElementById('currentCode');
+    
+    // Add loading state
+    refreshBtn.disabled = true;
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Refreshing...';
+    
+    fetch('/api/code')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('Error:', data.error);
+                codeDisplay.textContent = 'ERROR';
+                return;
+            }
+            
+            // Update code with animation
+            codeDisplay.style.opacity = '0.5';
+            setTimeout(() => {
+                codeDisplay.textContent = data.code;
+                codeDisplay.style.opacity = '1';
+                
+                // Add flash effect
+                codeDisplay.classList.add('flash-update');
+                setTimeout(() => {
+                    codeDisplay.classList.remove('flash-update');
+                }, 500);
+            }, 200);
+        })
+        .catch(error => {
+            console.error('Error refreshing code:', error);
+            codeDisplay.textContent = 'ERROR';
+        })
+        .finally(() => {
+            // Restore button state
+            refreshBtn.disabled = false;
+            refreshBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Refresh Code';
+        });
+}
+
+// Cleanup intervals when leaving page
+window.addEventListener('beforeunload', function() {
+    if (refreshInterval) clearInterval(refreshInterval);
+    if (countdownInterval) clearInterval(countdownInterval);
+});
+</script>
+{% endblock %}

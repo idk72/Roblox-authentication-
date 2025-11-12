@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Setup - Roblox Authenticator{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8">
+        <div class="gaming-card">
+            <div class="card-header text-center">
+                <h2 class="glow-text mb-0">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    Setup Authenticator
+                </h2>
+            </div>
+            <div class="card-body">
+                <p class="text-center text-muted mb-4">
+                    Enter your Roblox cookie to generate time-based authentication codes
+                </p>
+                
+                <form method="POST" action="{{ url_for('setup_authenticator') }}" class="needs-validation" novalidate>
+                    <div class="mb-4">
+                        <label for="cookie" class="form-label">
+                            <i class="fas fa-cookie-bite me-2"></i>
+                            Roblox Cookie
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text gaming-input-group">
+                                <i class="fas fa-key"></i>
+                            </span>
+                            <textarea 
+                                class="form-control gaming-input" 
+                                id="cookie" 
+                                name="cookie" 
+                                rows="4" 
+                                placeholder="Paste your .ROBLOSECURITY cookie here..."
+                                required
+                            ></textarea>
+                        </div>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Your cookie is stored securely and used only for authentication
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn gaming-btn-primary">
+                            <i class="fas fa-rocket me-2"></i>
+                            Setup Authenticator
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Instructions Card -->
+        <div class="gaming-card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-question-circle me-2"></i>
+                    How to get your Roblox Cookie
+                </h5>
+            </div>
+            <div class="card-body">
+                <ol class="mb-0">
+                    <li class="mb-2">
+                        <strong>Open Roblox in your browser</strong> and make sure you're logged in
+                    </li>
+                    <li class="mb-2">
+                        <strong>Open Developer Tools</strong> (F12 or right-click → Inspect)
+                    </li>
+                    <li class="mb-2">
+                        <strong>Go to Application/Storage tab</strong> → Cookies → https://www.roblox.com
+                    </li>
+                    <li class="mb-2">
+                        <strong>Find .ROBLOSECURITY</strong> and copy its value
+                    </li>
+                    <li>
+                        <strong>Paste the value</strong> in the form above
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+</script>
+{% endblock %}
